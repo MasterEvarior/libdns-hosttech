@@ -1,4 +1,4 @@
-package main
+package hosttech
 
 import (
 	"encoding/json"
@@ -65,4 +65,30 @@ func (h *HosttechRecordWrapper) UnmarshalJSON(b []byte) error {
 	}
 
 	return nil
+}
+
+func LibdnsRecordToHosttechRecordWrapper(record libdns.Record) (HosttechRecord, error) {
+	var hosttechRecord HosttechRecord
+
+	switch record.Type {
+	case "AAAA":
+		hosttechRecord = AAAARecord{}
+	case "A":
+		hosttechRecord = ARecord{}
+	case "NS":
+		hosttechRecord = NSRecord{}
+	case "CNAME":
+		hosttechRecord = CNAMERecord{}
+	case "MX":
+		hosttechRecord = MXRecord{}
+	case "TXT":
+		hosttechRecord = TXTRecord{}
+	case "TLSA":
+		hosttechRecord = TLSARecord{}
+	default:
+		return nil, fmt.Errorf(`record type "%s" is not supported"`, record.Type)
+	}
+
+	hosttechRecord.fromLibdnsRecord(record)
+	return hosttechRecord, nil
 }

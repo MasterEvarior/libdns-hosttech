@@ -1,4 +1,4 @@
-package main
+package hosttech
 
 import (
 	"fmt"
@@ -7,11 +7,13 @@ import (
 	"time"
 )
 
+// HosttechRecord must be implemented by each different type of record representation from the Hosttech.ch API, to allow a transformation from and to libdns.record.
 type HosttechRecord interface {
 	toLibdnsRecord() libdns.Record
 	fromLibdnsRecord(record libdns.Record)
 }
 
+// Base holds all the values that are present in each record
 type Base struct {
 	Id      int    `json:"id,omitempty"`
 	Type    string `json:"type,omitempty"`
@@ -19,6 +21,7 @@ type Base struct {
 	Comment string `json:"comment,omitempty"`
 }
 
+// AAAARecord is an implementation of the AAAA record type
 type AAAARecord struct {
 	Base
 	Name string `json:"name,omitempty"`
@@ -37,11 +40,13 @@ func (a AAAARecord) toLibdnsRecord() libdns.Record {
 
 func (a AAAARecord) fromLibdnsRecord(record libdns.Record) {
 	a.Name = record.Name
+	a.Type = record.Type
 	a.IPV6 = record.Value
 	a.TTL = durationToIntSeconds(record.TTL)
 	a.Comment = generateComment()
 }
 
+// ARecord is an implementation of the A record type
 type ARecord struct {
 	Base
 	Name string `json:"name,omitempty"`
@@ -60,11 +65,13 @@ func (a ARecord) toLibdnsRecord() libdns.Record {
 
 func (a ARecord) fromLibdnsRecord(record libdns.Record) {
 	a.Name = record.Name
+	a.Type = record.Type
 	a.IPV4 = record.Value
 	a.TTL = durationToIntSeconds(record.TTL)
 	a.Comment = generateComment()
 }
 
+// CNAMERecord is an implementation of the CNAME record type
 type CNAMERecord struct {
 	Base
 	Name  string `json:"name,omitempty"`
@@ -83,11 +90,13 @@ func (c CNAMERecord) toLibdnsRecord() libdns.Record {
 
 func (c CNAMERecord) fromLibdnsRecord(record libdns.Record) {
 	c.Name = record.Name
+	c.Type = record.Type
 	c.Cname = record.Value
 	c.TTL = durationToIntSeconds(record.TTL)
 	c.Comment = generateComment()
 }
 
+// MXRecord is an implementation of the MX record type
 type MXRecord struct {
 	Base
 	Name      string `json:"name,omitempty"`
@@ -108,12 +117,14 @@ func (m MXRecord) toLibdnsRecord() libdns.Record {
 
 func (m MXRecord) fromLibdnsRecord(record libdns.Record) {
 	m.OwnerName = record.Name
+	m.Type = record.Type
 	m.TTL = durationToIntSeconds(record.TTL)
 	m.Name = record.Value
 	m.Pref = record.Priority
 	m.Comment = generateComment()
 }
 
+// NSRecord is an implementation of the NS record type
 type NSRecord struct {
 	Base
 	OwnerName  string `json:"ownername,omitempty"`
@@ -132,11 +143,13 @@ func (n NSRecord) toLibdnsRecord() libdns.Record {
 
 func (n NSRecord) fromLibdnsRecord(record libdns.Record) {
 	n.OwnerName = record.Name
+	n.Type = record.Type
 	n.TargetName = record.Value
 	n.TTL = durationToIntSeconds(record.TTL)
 	n.Comment = generateComment()
 }
 
+// TXTRecord is an implementation of the TXT record type
 type TXTRecord struct {
 	Base
 	Name string `json:"name,omitempty"`
@@ -155,11 +168,13 @@ func (t TXTRecord) toLibdnsRecord() libdns.Record {
 
 func (t TXTRecord) fromLibdnsRecord(record libdns.Record) {
 	t.Name = record.Name
+	t.Type = record.Type
 	t.Text = record.Value
 	t.TTL = durationToIntSeconds(record.TTL)
 	t.Comment = generateComment()
 }
 
+// TLSARecord is an implementation of the TLSA record type
 type TLSARecord struct {
 	Base
 	Name string `json:"name,omitempty"`
@@ -178,6 +193,7 @@ func (t TLSARecord) toLibdnsRecord() libdns.Record {
 
 func (t TLSARecord) fromLibdnsRecord(record libdns.Record) {
 	t.Name = record.Name
+	t.Type = record.Type
 	t.Text = record.Value
 	t.TTL = durationToIntSeconds(record.TTL)
 	t.Comment = generateComment()
