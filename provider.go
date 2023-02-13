@@ -59,7 +59,20 @@ func (p *Provider) SetRecords(ctx context.Context, zone string, records []libdns
 
 // DeleteRecords deletes the records from the zone. It returns the records that were deleted.
 func (p *Provider) DeleteRecords(ctx context.Context, zone string, records []libdns.Record) ([]libdns.Record, error) {
-	return nil, fmt.Errorf("TODO: not implemented")
+	successfullyDeletedRecords := []libdns.Record{}
+
+	for _, record := range records {
+		reqUrl := fmt.Sprintf("%s/zones/%s/records/%s", p.getApiHost(), zone, record.ID)
+		_, err := p.makeApiCall(ctx, http.MethodDelete, reqUrl)
+
+		if err != nil {
+			return successfullyDeletedRecords, err
+		}
+
+		successfullyDeletedRecords = append(successfullyDeletedRecords, record)
+	}
+
+	return successfullyDeletedRecords, nil
 }
 
 func (p *Provider) makeApiCall(ctx context.Context, httpMethod string, reqUrl string) ([]libdns.Record, error) {
@@ -77,6 +90,10 @@ func (p *Provider) makeApiCall(ctx context.Context, httpMethod string, reqUrl st
 	//Return an empty slice if there's an error
 	if err != nil {
 		return []libdns.Record{}, err
+	}
+
+	if resp.StatusCode < 200 && 300 >= resp.StatusCode {
+		return []libdns.Record{}, fmt.Errorf("call to API was not successful, returned the status code '%s'", resp.Status)
 	}
 
 	var parsedResponse HosttechResponseWrapper

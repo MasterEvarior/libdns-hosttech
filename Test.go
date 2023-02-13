@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/libdns/libdns"
 )
 
 func main() {
@@ -11,4 +12,8 @@ func main() {
 	}
 
 	provider.GetRecords(context.Background(), "hmlb.ch")
+
+	provider.DeleteRecords(context.Background(), "hmlb.ch", []libdns.Record{{
+		ID: "2499489",
+	}, {ID: "2499490"}})
 }
