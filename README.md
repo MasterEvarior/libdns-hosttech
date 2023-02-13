@@ -21,6 +21,28 @@ hosttech for [`libdns`](https://github.com/libdns/libdns)
 
 [![Go Reference](https://pkg.go.dev/badge/test.svg)](https://pkg.go.dev/github.com/libdns/hosttech)
 
-This package implements the [libdns interfaces](https://github.com/libdns/libdns) for hosttech, allowing you to manage DNS records.
+This package implements the [libdns interfaces](https://github.com/libdns/libdns) for [hosttech.ch](https://hosttech.ch), allowing you to manage DNS records.
 
-TODO: Show how to configure and use. Explain any caveats.
+## Example Use
+
+```go
+
+```
+
+## Constraints
+Because the Hosttech API does not provide a way to manipulate a generic "Type,Name,Value"-Record, not every type of record can be set. Currently supported are:
+- AAAA
+- A
+- NS
+- CNAME
+- MX
+- TXT
+- TLSA
+
+Any unsupported record types returns an error.
+
+## Further documentation
+Any further documentation that could be helpful:
+ - [Hosttech DNS API documentation](https://api.ns1.hosttech.eu/api/documentation)
+
+
