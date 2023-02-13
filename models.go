@@ -101,9 +101,15 @@ func (a AAAARecord) toLibdnsRecord() libdns.Record {
 		Type:  a.Type,
 		Name:  a.Name,
 		Value: a.IPV6,
-		TTL:   time.Duration(a.TTL),
+		TTL:   time.Duration(a.TTL * 1000000000),
 	}
 }
+
+//func (a AAAARecord) fromLibdnsRecord(record libdns.Record) {
+//	a.Name = record.Name
+//	a.IPV6 = record.Value
+//	a.TTL = record.TTL
+//}
 
 type ARecord struct {
 	Base
@@ -117,7 +123,7 @@ func (a ARecord) toLibdnsRecord() libdns.Record {
 		Type:  a.Type,
 		Name:  a.Name,
 		Value: a.IPV4,
-		TTL:   time.Duration(a.TTL),
+		TTL:   time.Duration(a.TTL * 1000000000),
 	}
 }
 
@@ -135,7 +141,7 @@ func (c CAARecord) toLibdnsRecord() libdns.Record {
 		Type:  c.Type,
 		Name:  c.Name,
 		Value: c.Value,
-		TTL:   time.Duration(c.TTL),
+		TTL:   time.Duration(c.TTL * 1000000000),
 	}
 }
 
@@ -151,7 +157,7 @@ func (c CNAMERecord) toLibdnsRecord() libdns.Record {
 		Type:  c.Type,
 		Name:  c.Name,
 		Value: c.Cname,
-		TTL:   time.Duration(c.TTL),
+		TTL:   time.Duration(c.TTL * 1000000000),
 	}
 }
 
@@ -168,7 +174,7 @@ func (m MXRecord) toLibdnsRecord() libdns.Record {
 		Type:     m.Type,
 		Name:     m.OwnerName,
 		Value:    m.Name,
-		TTL:      time.Duration(m.TTL),
+		TTL:      time.Duration(m.TTL * 1000000000),
 		Priority: m.Pref,
 	}
 }
@@ -185,7 +191,7 @@ func (n NSRecord) toLibdnsRecord() libdns.Record {
 		Type:  n.Type,
 		Name:  n.OwnerName,
 		Value: n.TargetName,
-		TTL:   time.Duration(n.TTL),
+		TTL:   time.Duration(n.TTL * 1000000000),
 	}
 }
 
@@ -201,7 +207,7 @@ func (p PTRRecord) toLibdnsRecord() libdns.Record {
 		Type:     p.Type,
 		Name:     p.Name,
 		Value:    p.Origin,
-		TTL:      time.Duration(p.TTL),
+		TTL:      time.Duration(p.TTL * 1000000000),
 		Priority: 0,
 	}
 }
@@ -221,7 +227,7 @@ func (s SRVRecord) toLibdnsRecord() libdns.Record {
 		Type:     s.Type,
 		Name:     s.Service,
 		Value:    s.Target,
-		TTL:      time.Duration(s.TTL),
+		TTL:      time.Duration(s.TTL * 1000000000),
 		Priority: s.Priority,
 	}
 }
@@ -238,7 +244,7 @@ func (t TXTRecord) toLibdnsRecord() libdns.Record {
 		Type:  t.Type,
 		Name:  t.Name,
 		Value: t.Text,
-		TTL:   time.Duration(t.TTL),
+		TTL:   time.Duration(t.TTL * 1000000000),
 	}
 }
 
@@ -254,7 +260,7 @@ func (t TLSARecord) toLibdnsRecord() libdns.Record {
 		Type:  t.Type,
 		Name:  t.Name,
 		Value: t.Text,
-		TTL:   time.Duration(t.TTL),
+		TTL:   time.Duration(t.TTL * 1000000000),
 	}
 }
 
