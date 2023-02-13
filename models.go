@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/libdns/libdns"
 	"strconv"
@@ -10,76 +9,7 @@ import (
 
 type HosttechRecord interface {
 	toLibdnsRecord() libdns.Record
-	//fromLibdnsRecord(record libdns.Record)
-}
-
-type HosttechRecordWrapper struct {
-	value HosttechRecord
-}
-
-func (h HosttechRecordWrapper) toLibdnsRecord() libdns.Record {
-	return h.value.toLibdnsRecord()
-}
-
-//func (h HosttechRecordWrapper) fromLibdnsRecord(record libdns.Record) {
-//	h.value.fromLibdnsRecord(record)
-//}
-
-func (h *HosttechRecordWrapper) UnmarshalJSON(b []byte) error {
-	var base Base
-	err := json.Unmarshal(b, &base)
-	if err != nil {
-		return err
-	}
-	switch base.Type {
-	case "AAAA":
-		record := AAAARecord{}
-		err = json.Unmarshal(b, &record)
-		h.value = HosttechRecord(record)
-	case "A":
-		record := ARecord{}
-		err = json.Unmarshal(b, &record)
-		h.value = HosttechRecord(record)
-	case "NS":
-		record := NSRecord{}
-		err = json.Unmarshal(b, &record)
-		h.value = HosttechRecord(record)
-	case "CAA":
-		record := CAARecord{}
-		err = json.Unmarshal(b, &record)
-		h.value = HosttechRecord(record)
-	case "CNAME":
-		record := CNAMERecord{}
-		err = json.Unmarshal(b, &record)
-		h.value = HosttechRecord(record)
-	case "MX":
-		record := MXRecord{}
-		err = json.Unmarshal(b, &record)
-		h.value = HosttechRecord(record)
-	case "PTR":
-		record := PTRRecord{}
-		err = json.Unmarshal(b, &record)
-		h.value = HosttechRecord(record)
-	case "SRV":
-		record := SRVRecord{}
-		err = json.Unmarshal(b, &record)
-		h.value = HosttechRecord(record)
-	case "TXT":
-		record := TXTRecord{}
-		err = json.Unmarshal(b, &record)
-		h.value = HosttechRecord(record)
-	case "TLSA":
-		record := TLSARecord{}
-		err = json.Unmarshal(b, &record)
-		h.value = HosttechRecord(record)
-	default:
-		fmt.Errorf(`record type "%s" is not supported"`, base.Type)
-	}
-	if err != nil {
-		return err
-	}
-
-	return nil
+	fromLibdnsRecord(record libdns.Record)
 }
 
 type Base struct {
@@ -105,11 +35,12 @@ func (a AAAARecord) toLibdnsRecord() libdns.Record {
 	}
 }
 
-//func (a AAAARecord) fromLibdnsRecord(record libdns.Record) {
-//	a.Name = record.Name
-//	a.IPV6 = record.Value
-//	a.TTL = record.TTL
-//}
+func (a AAAARecord) fromLibdnsRecord(record libdns.Record) {
+	a.Name = record.Name
+	a.IPV6 = record.Value
+	a.TTL = durationToIntSeconds(record.TTL)
+	a.Comment = generateComment()
+}
 
 type ARecord struct {
 	Base
@@ -127,22 +58,11 @@ func (a ARecord) toLibdnsRecord() libdns.Record {
 	}
 }
 
-type CAARecord struct {
-	Base
-	Name  string `json:"name,omitempty"`
-	Flag  string `json:"flag,omitempty"`
-	Tag   string `json:"tag,omitempty"`
-	Value string `json:"value,omitempty"`
-}
-
-func (c CAARecord) toLibdnsRecord() libdns.Record {
-	return libdns.Record{
-		ID:    strconv.Itoa(c.Id),
-		Type:  c.Type,
-		Name:  c.Name,
-		Value: c.Value,
-		TTL:   time.Duration(c.TTL * 1000000000),
-	}
+func (a ARecord) fromLibdnsRecord(record libdns.Record) {
+	a.Name = record.Name
+	a.IPV4 = record.Value
+	a.TTL = durationToIntSeconds(record.TTL)
+	a.Comment = generateComment()
 }
 
 type CNAMERecord struct {
@@ -159,6 +79,13 @@ func (c CNAMERecord) toLibdnsRecord() libdns.Record {
 		Value: c.Cname,
 		TTL:   time.Duration(c.TTL * 1000000000),
 	}
+}
+
+func (c CNAMERecord) fromLibdnsRecord(record libdns.Record) {
+	c.Name = record.Name
+	c.Cname = record.Value
+	c.TTL = durationToIntSeconds(record.TTL)
+	c.Comment = generateComment()
 }
 
 type MXRecord struct {
@@ -179,6 +106,14 @@ func (m MXRecord) toLibdnsRecord() libdns.Record {
 	}
 }
 
+func (m MXRecord) fromLibdnsRecord(record libdns.Record) {
+	m.OwnerName = record.Name
+	m.TTL = durationToIntSeconds(record.TTL)
+	m.Name = record.Value
+	m.Pref = record.Priority
+	m.Comment = generateComment()
+}
+
 type NSRecord struct {
 	Base
 	OwnerName  string `json:"ownername,omitempty"`
@@ -195,41 +130,11 @@ func (n NSRecord) toLibdnsRecord() libdns.Record {
 	}
 }
 
-type PTRRecord struct {
-	Base
-	Name   string `json:"name,omitempty"`
-	Origin string `json:"origin,omitempty"`
-}
-
-func (p PTRRecord) toLibdnsRecord() libdns.Record {
-	return libdns.Record{
-		ID:       strconv.Itoa(p.Id),
-		Type:     p.Type,
-		Name:     p.Name,
-		Value:    p.Origin,
-		TTL:      time.Duration(p.TTL * 1000000000),
-		Priority: 0,
-	}
-}
-
-type SRVRecord struct {
-	Base
-	Service  string `json:"service,omitempty"`
-	Priority int    `json:"priority,omitempty"`
-	Weight   int    `json:"weight,omitempty"`
-	Port     int    `json:"port,omitempty"`
-	Target   string `json:"target,omitempty"`
-}
-
-func (s SRVRecord) toLibdnsRecord() libdns.Record {
-	return libdns.Record{
-		ID:       strconv.Itoa(s.Id),
-		Type:     s.Type,
-		Name:     s.Service,
-		Value:    s.Target,
-		TTL:      time.Duration(s.TTL * 1000000000),
-		Priority: s.Priority,
-	}
+func (n NSRecord) fromLibdnsRecord(record libdns.Record) {
+	n.OwnerName = record.Name
+	n.TargetName = record.Value
+	n.TTL = durationToIntSeconds(record.TTL)
+	n.Comment = generateComment()
 }
 
 type TXTRecord struct {
@@ -248,6 +153,13 @@ func (t TXTRecord) toLibdnsRecord() libdns.Record {
 	}
 }
 
+func (t TXTRecord) fromLibdnsRecord(record libdns.Record) {
+	t.Name = record.Name
+	t.Text = record.Value
+	t.TTL = durationToIntSeconds(record.TTL)
+	t.Comment = generateComment()
+}
+
 type TLSARecord struct {
 	Base
 	Name string `json:"name,omitempty"`
@@ -264,6 +176,17 @@ func (t TLSARecord) toLibdnsRecord() libdns.Record {
 	}
 }
 
-type HosttechResponse struct {
-	Data []HosttechRecordWrapper `json:"data"`
+func (t TLSARecord) fromLibdnsRecord(record libdns.Record) {
+	t.Name = record.Name
+	t.Text = record.Value
+	t.TTL = durationToIntSeconds(record.TTL)
+	t.Comment = generateComment()
+}
+
+func durationToIntSeconds(duration time.Duration) int {
+	return int(duration.Minutes())
+}
+
+func generateComment() string {
+	return fmt.Sprintf("This record was created with libdns at %s UTC", time.Now().UTC().Format(time.DateTime))
 }

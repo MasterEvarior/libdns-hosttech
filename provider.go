@@ -79,7 +79,7 @@ func (p *Provider) makeApiCall(ctx context.Context, httpMethod string, reqUrl st
 		return []libdns.Record{}, err
 	}
 
-	var parsedResponse HosttechResponse
+	var parsedResponse HosttechResponseWrapper
 	json.NewDecoder(resp.Body).Decode(&parsedResponse)
 
 	var libdnsRecords []libdns.Record
