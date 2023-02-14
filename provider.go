@@ -25,7 +25,7 @@ const apiHost = "https://api.ns1.hosttech.eu/api/user/v1"
 func (p *Provider) GetRecords(ctx context.Context, zone string) ([]libdns.Record, error) {
 	reqURL := fmt.Sprintf("%s/zones/%s/records", apiHost, zone)
 
-	returnValue, err := p.makeApiCall(ctx, http.MethodGet, reqURL, nil)
+	returnValue, err := p.makeApiCall(ctx, http.MethodGet, reqURL, nil, zone)
 
 	//If there's an error return an empty slice
 	if err != nil {
@@ -43,7 +43,7 @@ func (p *Provider) AppendRecords(ctx context.Context, zone string, records []lib
 	successfullyAppendedRecords := []libdns.Record{}
 	for _, record := range records {
 
-		hosttechRecord, err := LibdnsRecordToHosttechRecordWrapper(record)
+		hosttechRecord, err := LibdnsRecordToHosttechRecordWrapper(record, zone)
 		if err != nil {
 			return nil, err
 		}
@@ -53,7 +53,7 @@ func (p *Provider) AppendRecords(ctx context.Context, zone string, records []lib
 			return nil, err
 		}
 
-		resp, err := p.makeApiCall(ctx, http.MethodPost, reqURL, bytes.NewReader(bodyBytes))
+		resp, err := p.makeApiCall(ctx, http.MethodPost, reqURL, bytes.NewReader(bodyBytes), zone)
 		if err != nil {
 			return successfullyAppendedRecords, err
 		}
@@ -66,22 +66,41 @@ func (p *Provider) AppendRecords(ctx context.Context, zone string, records []lib
 
 // SetRecords sets the records in the zone, either by updating existing records or creating new ones.
 // It returns the updated records.
-// TODO
 func (p *Provider) SetRecords(ctx context.Context, zone string, records []libdns.Record) ([]libdns.Record, error) {
 	successfullyUpdatedRecords := []libdns.Record{}
 	for _, record := range records {
 
-		bodyBytes, err := json.Marshal(record)
+		hosttechRecord, err := LibdnsRecordToHosttechRecordWrapper(record, zone)
+		if err != nil {
+			return nil, err
+		}
+		bodyBytes, err := json.Marshal(hosttechRecord)
 
 		if err != nil {
 			return nil, err
 		}
 
 		reqURL := fmt.Sprintf("%s/zones/%s/records/%s", apiHost, zone, record.ID)
-		resp, err := p.makeApiCall(ctx, http.MethodPut, reqURL, bytes.NewReader(bodyBytes))
+		resp, err := p.makeApiCall(ctx, http.MethodPut, reqURL, bytes.NewReader(bodyBytes), zone)
 
 		if err != nil {
-			return successfullyUpdatedRecords, err
+			//If the error doesn't have anything to do with the api, return
+			apiError, ok := err.(ApiError)
+			if !ok {
+				return successfullyUpdatedRecords, err
+			}
+
+			//If the error isn't a 404, return
+			if apiError.ErrorCode != 404 {
+				return successfullyUpdatedRecords, err
+			}
+
+			//If the error was a 404, the record could not be updated because it didn't exist. So we create a new one
+			_, err := p.AppendRecords(ctx, zone, []libdns.Record{record})
+
+			if err != nil {
+				return successfullyUpdatedRecords, err
+			}
 		}
 
 		successfullyUpdatedRecords = append(successfullyUpdatedRecords, resp...)
@@ -96,7 +115,7 @@ func (p *Provider) DeleteRecords(ctx context.Context, zone string, records []lib
 	successfullyDeletedRecords := []libdns.Record{}
 	for _, record := range records {
 		reqUrl := fmt.Sprintf("%s/zones/%s/records/%s", apiHost, zone, record.ID)
-		_, err := p.makeApiCall(ctx, http.MethodDelete, reqUrl, nil)
+		_, err := p.makeApiCall(ctx, http.MethodDelete, reqUrl, nil, zone)
 
 		if err != nil {
 			return successfullyDeletedRecords, err
@@ -108,7 +127,7 @@ func (p *Provider) DeleteRecords(ctx context.Context, zone string, records []lib
 	return successfullyDeletedRecords, nil
 }
 
-func (p *Provider) makeApiCall(ctx context.Context, httpMethod string, reqUrl string, body io.Reader) ([]libdns.Record, error) {
+func (p *Provider) makeApiCall(ctx context.Context, httpMethod string, reqUrl string, body io.Reader, zone string) ([]libdns.Record, error) {
 	req, err := http.NewRequestWithContext(ctx, httpMethod, reqUrl, body)
 	req.Header.Set("Authorization", "Bearer "+p.APIToken)
 	req.Header.Set("Content-Type", "application/json")
@@ -125,8 +144,11 @@ func (p *Provider) makeApiCall(ctx context.Context, httpMethod string, reqUrl st
 		return []libdns.Record{}, err
 	}
 
-	if resp.StatusCode < 200 && 300 >= resp.StatusCode {
-		return []libdns.Record{}, fmt.Errorf("call to API was not successful, returned the status code '%s'", resp.Status)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return []libdns.Record{}, ApiError{
+			s:         fmt.Sprintf("call to API was not successful, returned the status code '%s'", resp.Status),
+			ErrorCode: resp.StatusCode,
+		}
 	}
 
 	var parsedResponse HosttechResponseWrapper
@@ -134,7 +156,7 @@ func (p *Provider) makeApiCall(ctx context.Context, httpMethod string, reqUrl st
 
 	var libdnsRecords []libdns.Record
 	for _, record := range parsedResponse.Data {
-		libdnsRecords = append(libdnsRecords, record.toLibdnsRecord())
+		libdnsRecords = append(libdnsRecords, record.toLibdnsRecord(zone))
 	}
 
 	return libdnsRecords, nil
