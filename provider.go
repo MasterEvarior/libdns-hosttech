@@ -1,6 +1,6 @@
 // Package hosttech implements methods for manipulating Hosttech.ch DNS records with the libdns interfaces.
 // Manipulation is achieved with the Hosttech API at https://api.ns1.hosttech.eu/api/documentation/#/.
-package main
+package hosttech
 
 import (
 	"bytes"
