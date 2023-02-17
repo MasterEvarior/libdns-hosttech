@@ -6,10 +6,7 @@ hosttech for [`libdns`](https://github.com/libdns/libdns)
 This package implements the [libdns interfaces](https://github.com/libdns/libdns) for [hosttech.ch](https://hosttech.ch), allowing you to manage DNS records.
 
 ## Example Use
-
-```go
-
-```
+See for an example [here](./provider_example.go).
 
 ## Constraints
 Some constraints.
