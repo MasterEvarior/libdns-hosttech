@@ -1,4 +1,4 @@
-package hosttech
+package main
 
 import (
 	"encoding/json"
@@ -6,16 +6,20 @@ import (
 	"github.com/libdns/libdns"
 )
 
-type HosttechResponseWrapper struct {
+type HosttechListResponseWrapper struct {
 	Data []HosttechRecordWrapper `json:"data"`
+}
+
+type HosttechSingleResponseWrapper struct {
+	Data HosttechRecordWrapper `json:"data"`
 }
 
 type HosttechRecordWrapper struct {
 	value HosttechRecord
 }
 
-func (h HosttechRecordWrapper) toLibdnsRecord() libdns.Record {
-	return h.value.toLibdnsRecord()
+func (h HosttechRecordWrapper) toLibdnsRecord(zone string) libdns.Record {
+	return h.value.toLibdnsRecord(zone)
 }
 
 func (h HosttechRecordWrapper) fromLibdnsRecord(record libdns.Record) {
@@ -89,6 +93,5 @@ func LibdnsRecordToHosttechRecordWrapper(record libdns.Record) (HosttechRecord, 
 		return nil, fmt.Errorf(`record type "%s" is not supported"`, record.Type)
 	}
 
-	hosttechRecord.fromLibdnsRecord(record)
-	return hosttechRecord, nil
+	return hosttechRecord.fromLibdnsRecord(record), nil
 }

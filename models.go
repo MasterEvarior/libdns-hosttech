@@ -1,4 +1,4 @@
-package hosttech
+package main
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 // HosttechRecord must be implemented by each different type of record representation from the Hosttech.ch API, to allow a transformation from and to libdns.record.
 type HosttechRecord interface {
 	toLibdnsRecord(zone string) libdns.Record
-	fromLibdnsRecord(record libdns.Record, zone string) HosttechRecord
+	fromLibdnsRecord(record libdns.Record) HosttechRecord
 }
 
 // Base holds all the values that are present in each record
@@ -38,8 +38,8 @@ func (a AAAARecord) toLibdnsRecord(zone string) libdns.Record {
 	}
 }
 
-func (a AAAARecord) fromLibdnsRecord(record libdns.Record, zone string) HosttechRecord {
-	a.Name = libdns.AbsoluteName(record.Name, zone)
+func (a AAAARecord) fromLibdnsRecord(record libdns.Record) HosttechRecord {
+	a.Name = record.Name
 	a.Type = record.Type
 	a.IPV6 = record.Value
 	a.TTL = durationToIntSeconds(record.TTL)
@@ -65,8 +65,8 @@ func (a ARecord) toLibdnsRecord(zone string) libdns.Record {
 	}
 }
 
-func (a ARecord) fromLibdnsRecord(record libdns.Record, zone string) HosttechRecord {
-	a.Name = libdns.AbsoluteName(record.Name, zone)
+func (a ARecord) fromLibdnsRecord(record libdns.Record) HosttechRecord {
+	a.Name = record.Name
 	a.Type = record.Type
 	a.IPV4 = record.Value
 	a.TTL = durationToIntSeconds(record.TTL)
@@ -92,8 +92,8 @@ func (c CNAMERecord) toLibdnsRecord(zone string) libdns.Record {
 	}
 }
 
-func (c CNAMERecord) fromLibdnsRecord(record libdns.Record, zone string) HosttechRecord {
-	c.Name = libdns.AbsoluteName(record.Name, zone)
+func (c CNAMERecord) fromLibdnsRecord(record libdns.Record) HosttechRecord {
+	c.Name = record.Name
 	c.Type = record.Type
 	c.Cname = record.Value
 	c.TTL = durationToIntSeconds(record.TTL)
@@ -121,8 +121,8 @@ func (m MXRecord) toLibdnsRecord(zone string) libdns.Record {
 	}
 }
 
-func (m MXRecord) fromLibdnsRecord(record libdns.Record, zone string) HosttechRecord {
-	m.OwnerName = libdns.AbsoluteName(record.Name, zone)
+func (m MXRecord) fromLibdnsRecord(record libdns.Record) HosttechRecord {
+	m.OwnerName = record.Name
 	m.Type = record.Type
 	m.TTL = durationToIntSeconds(record.TTL)
 	m.Name = record.Value
@@ -149,8 +149,8 @@ func (n NSRecord) toLibdnsRecord(zone string) libdns.Record {
 	}
 }
 
-func (n NSRecord) fromLibdnsRecord(record libdns.Record, zone string) HosttechRecord {
-	n.OwnerName = libdns.AbsoluteName(record.Name, zone)
+func (n NSRecord) fromLibdnsRecord(record libdns.Record) HosttechRecord {
+	n.OwnerName = record.Name
 	n.Type = record.Type
 	n.TargetName = record.Value
 	n.TTL = durationToIntSeconds(record.TTL)
@@ -176,8 +176,8 @@ func (t TXTRecord) toLibdnsRecord(zone string) libdns.Record {
 	}
 }
 
-func (t TXTRecord) fromLibdnsRecord(record libdns.Record, zone string) HosttechRecord {
-	t.Name = libdns.AbsoluteName(record.Name, zone)
+func (t TXTRecord) fromLibdnsRecord(record libdns.Record) HosttechRecord {
+	t.Name = record.Name
 	t.Type = record.Type
 	t.Text = record.Value
 	t.TTL = durationToIntSeconds(record.TTL)
@@ -203,8 +203,8 @@ func (t TLSARecord) toLibdnsRecord(zone string) libdns.Record {
 	}
 }
 
-func (t TLSARecord) fromLibdnsRecord(record libdns.Record, zone string) HosttechRecord {
-	t.Name = libdns.AbsoluteName(record.Name, zone)
+func (t TLSARecord) fromLibdnsRecord(record libdns.Record) HosttechRecord {
+	t.Name = record.Name
 	t.Type = record.Type
 	t.Text = record.Value
 	t.TTL = durationToIntSeconds(record.TTL)
